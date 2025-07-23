@@ -43,8 +43,8 @@ class Structure(_GatekeeperSpace):
 
     def __init__(
         self,
-        preset: Preset,
-        mesh: Mesh,
+        preset: Optional[Preset] = None,
+        mesh: Optional[Mesh] = None,
         size: List[Union[float, int]] = [100.0, 100.0, 100.0],
         name: str = "Structure",
         slicing_origin: str = "scene_bottom",
@@ -310,10 +310,10 @@ class Structure(_GatekeeperSpace):
         self.load_mesh = load_mesh
         self.load_preset = load_preset
 
-        if self.load_preset:
+        if self.load_preset and self.preset is not None:
             self.project.load_presets(self.preset)
 
-        if self.load_mesh:
+        if self.load_mesh and self.mesh is not None:
             if self.mesh._type != "mesh_file":
                 raise TypeError(
                     "Images are used only for MarkerAligner class."
@@ -331,7 +331,7 @@ class Structure(_GatekeeperSpace):
         if self._mesh:
             self.geometry = {
                 "type": "mesh",
-                "resource": self.mesh.id,
+                "resource": self.mesh.id if self.mesh else "",
                 "scale": [
                     self.size[0] / 100,
                     self.size[1] / 100,
@@ -339,7 +339,7 @@ class Structure(_GatekeeperSpace):
                 ],
             }
         node_dict = super().to_dict()
-        node_dict["preset"] = self.preset.id if self.preset else None
+        node_dict["preset"] = self.preset.id if self.preset else ""
         node_dict["properties"] = {"color": self.color}
         node_dict["geometry"] = self.geometry
         node_dict["slicing_origin_reference"] = self.slicing_origin_reference
@@ -394,8 +394,8 @@ class Text(Structure):
             rotation (List[Union[float, int]]): The rotation of the text [psi, theta, phi].
         """
         super().__init__(
-            preset=preset,
             mesh=None,
+            preset=preset,
             name=name,
             slicing_origin=slicing_origin,
             slicing_offset=slicing_offset,
@@ -459,10 +459,10 @@ class Text(Structure):
         """
         self.project = project
 
-        if self.load_preset:
+        if self.load_preset and self.preset is not None:
             self.project.load_presets(self.preset)
 
-        if self.load_mesh:
+        if self.load_mesh and self.mesh is not None:
             if self.mesh._type != "mesh_file":
                 raise TypeError(
                     "Images are used only for MarkerAligner class."
@@ -830,10 +830,10 @@ class Lens(Structure):
         """
         self.project = project
 
-        if self.load_preset:
+        if self.load_preset and self.preset is not None:
             self.project.load_presets(self.preset)
 
-        if self.load_mesh:
+        if self.load_mesh and self.mesh is not None:
             if self.mesh._type != "mesh_file":
                 raise TypeError(
                     "Images are used only for MarkerAligner class."
