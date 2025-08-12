@@ -50,7 +50,7 @@ class TestNode(unittest.TestCase):
         self.parent.add_child(self.child1)
         self.child1.add_child(self.grandchild1)
 
-        descendants = self.parent._generate_all_descendants()
+        descendants = list(self.parent.all_descendants)
         self.assertIn(self.child1, descendants)
         self.assertIn(self.grandchild1, descendants)
         self.assertEqual(len(descendants), 2)
@@ -60,7 +60,7 @@ class TestNode(unittest.TestCase):
         self.parent.add_child(self.child1)
         self.child1.add_child(self.grandchild1)
 
-        ancestors = self.grandchild1._generate_all_ancestors()
+        ancestors = list(self.grandchild1.all_ancestors)
         self.assertIn(self.child1, ancestors)
         self.assertIn(self.parent, ancestors)
         self.assertEqual(len(ancestors), 2)
