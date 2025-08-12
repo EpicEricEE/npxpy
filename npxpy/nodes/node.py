@@ -12,7 +12,8 @@ This file is part of npxpy, which is licensed under the MIT License.
 """
 import uuid
 import copy
-from typing import Dict, Any, List, Tuple, Optional, Union, Self
+from itertools import chain
+from typing import Dict, Any, Iterator, List, Tuple, Optional, Union, Self
 from importlib.resources import files
 
 
@@ -61,10 +62,22 @@ class Node:
 
         self.children: List[str] = []
         self.children_nodes: List[Node] = []
-        self.all_descendants: List[Node] = self._generate_all_descendants()
 
         self.parent_node: List[Node] = []
-        self.all_ancestors: List[Node] = []
+
+    @property
+    def all_descendants(self) -> Iterator["Node"]:
+        """Return an iterator over all descendant nodes."""
+        for child in self.children_nodes:
+            yield child
+            yield from child.all_descendants
+
+    @property
+    def all_ancestors(self) -> Iterator["Node"]:
+        """Return an iterator over all ancestor nodes."""
+        for parent in self.parent_node:
+            yield parent
+            yield from parent.all_ancestors
 
     @property
     def name(self):
@@ -131,23 +144,6 @@ class Node:
 
             child_node.parent_node.append(self)
             self.children_nodes.append(child_node)
-            # Update descendants list of parent
-
-            self.all_descendants += [child_node] + child_node.all_descendants
-
-            for child in [child_node] + child_node.all_descendants:
-                child.all_ancestors = (
-                    child._generate_all_ancestors()
-                )  # Update ancestors list (_generate_all_ancestors() inexpensive and easy!)
-
-            for (
-                ancestor
-            ) in (
-                self.all_ancestors
-            ):  # Update descendants for the parent's ancestors
-                ancestor.all_descendants += [
-                    child_node
-                ] + child_node.all_descendants
 
         return self
 
@@ -225,9 +221,7 @@ class Node:
         copied_node = copy.deepcopy(self)
         copied_node.id = str(uuid.uuid4())
         copied_node.children_nodes = []
-        copied_node.all_descendants = []
         copied_node.parent_node = []
-        copied_node.all_ancestors = []
 
         if copy_children:
             copied_children = [
@@ -275,37 +269,7 @@ class Node:
             current_level_nodes = next_level_nodes
         return current_level_nodes[0]
 
-    def _generate_all_descendants(self) -> List["Node"]:
-        """
-        Generate a list of all descendant nodes.
-
-        Returns:
-            List[Node]: List of all descendant nodes.
-        """
-        descendants = []
-        nodes_to_check = [self]
-        while nodes_to_check:
-            current_node = nodes_to_check.pop()
-            descendants.extend(current_node.children_nodes)
-            nodes_to_check.extend(current_node.children_nodes)
-        return descendants
-
-    def _generate_all_ancestors(self) -> List["Node"]:
-        """
-        Generate a list of all ancestor nodes.
-
-        Returns:
-            List[Node]: List of all descendant nodes.
-        """
-        ancestors = []
-        nodes_to_check = [self]
-        while nodes_to_check:
-            current_node = nodes_to_check.pop()
-            ancestors.extend(current_node.parent_node)
-            nodes_to_check.extend(current_node.parent_node)
-        return ancestors
-
-    def grab_all_nodes_bfs(self, node_type: str) -> List["Node"]:
+    def grab_all_nodes_bfs(self, node_type: str) -> Iterator["Node"]:
         """
         Grab all nodes of the specified type using breadth-first search.
 
@@ -313,18 +277,12 @@ class Node:
             node_type (str): The type of nodes to grab.
 
         Returns:
-            List[Node]: List of nodes of the specified type.
+            Iterator[Node]: Iterator over all nodes of the specified type.
         """
-        result = []
-        nodes_to_check = [self]
-        while nodes_to_check:
-            current_node = nodes_to_check.pop(0)  # Dequeue from the front
-            if current_node._type == node_type:
-                result.append(current_node)
-            nodes_to_check.extend(
-                current_node.children_nodes
-            )  # Enqueue children
-        return result
+        if self._type == node_type:
+            yield self
+        for child in self.children_nodes:
+            yield from child.grab_all_nodes_bfs(node_type)
 
     def append_node(self, *nodes_to_append: "Node"):
         """
@@ -469,23 +427,25 @@ class Node:
         # init the meshbuilder
         meshbuilder = _meshbuilder()
 
-        for node in [self] + self.all_descendants:
+        for node in chain([self], self.all_descendants):
+            ancestors = list(node.all_ancestors)
+
             all_rotations = [
                 getattr(ancestor, "rotation", [0, 0, 0])
-                for ancestor in node.all_ancestors
+                for ancestor in ancestors
             ]
             all_rotations.reverse()
 
             all_positions = [
                 getattr(ancestor, "position", [0, 0, 0])
-                for ancestor in node.all_ancestors
+                for ancestor in ancestors
             ]
             all_positions.reverse()
 
             # If False, only go as far as node calling viewport()
             if not include_ancestor_transforms:
                 if node != self:
-                    dummy = node.all_ancestors.copy()
+                    dummy = ancestors.copy()
                     dummy.reverse()
                     start = dummy.index(self)
                     all_positions = all_positions[start:]
@@ -497,11 +457,11 @@ class Node:
             if node._type == "scene":
                 scene = node
                 # Create the circle representing the scene
-                if len(scene.all_ancestors) != 0 and hasattr(
-                    scene.all_ancestors[-1], "objective"
+                if len(ancestors) != 0 and hasattr(
+                    ancestors[-1], "objective"
                 ):
                     ronin_node = False
-                    objective = scene.all_ancestors[-1].objective
+                    objective = ancestors[-1].objective
                 else:
                     print(
                         (

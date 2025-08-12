@@ -277,7 +277,7 @@ class Project(Node):
         # Prepare paths and data
         nano_file_path = os.path.join(path, f"{project_name}.nano")
         toml_data = self._create_toml_data(
-            self._presets, self._resources, [self] + self.all_descendants
+            self._presets, self._resources, [self, *self.all_descendants]
         )
         project_info_data = self._create_project_info(self.project_info)
 
