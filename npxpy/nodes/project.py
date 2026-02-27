@@ -14,7 +14,7 @@ import pytomlpp as toml
 import json
 from datetime import datetime
 import os
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List, Union, Optional
 import zipfile
 from npxpy.nodes.node import Node
 from npxpy.resources import Resource
@@ -37,6 +37,7 @@ class Project(Node):
         objective: str,
         resin: str,
         substrate: str,
+        origin: Optional[List[float]] = None,
         auto_load_presets: bool = False,
         auto_load_meshes: bool = False,
         auto_load_images: bool = False,
@@ -48,6 +49,7 @@ class Project(Node):
             objective (str): Objective of the project.
             resin (str): Resin used in the project.
             substrate (str): Substrate used in the project.
+            origin (list, optional): Custom stage position of the project's origin.
             auto_load_presets (bool): Whether or not to automatically load any attached presets.
             auto_load_meshes (bool): Whether or not to automatically load any attached meshes.
             auto_load_images (bool): Whether or not to automatically load any attached images.
@@ -60,6 +62,7 @@ class Project(Node):
         self.objective = objective
         self.resin = resin
         self.substrate = substrate
+        self.origin = origin
 
         self._presets = []
         self._resources = []
@@ -136,6 +139,30 @@ class Project(Node):
                 f"Invalid substrate: {value}. Must be one of {valid_substrates}."
             )
         self._substrate = value
+
+    @property
+    def origin(self):
+        return self._origin
+
+    @origin.setter
+    def origin(self, value: Optional[List[float]]):
+        if value is None:
+            self._origin = None
+        else:
+            try:
+                value = list(value)
+            except TypeError as e:
+                raise ValueError(
+                    "Origin must be an iterable of two numeric elements."
+                ) from e
+            if len(value) != 2:
+                raise ValueError("Origin must have exactly two elements.")
+            try:
+                self._origin = [float(coord) for coord in value]
+            except ValueError as e:
+                raise ValueError(
+                    "All elements in origin must be numeric."
+                ) from e
 
     # Read-only public properties
     @property
@@ -319,4 +346,9 @@ class Project(Node):
                 "substrate": self.substrate,
             }
         )
+
+        if self.origin is not None:
+            node_dict["custom_origin"] = True
+            node_dict["origin"] = self.origin
+
         return node_dict
