@@ -116,6 +116,7 @@ class Project(Node):
             "IPX-Clear",
             "IPX-Q",
             "IPX-S",
+            "OrmoComp",
             "*",
         }
         if value not in valid_resins:

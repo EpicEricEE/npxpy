@@ -129,6 +129,7 @@ class Preset:
             "IPX-Clear",
             "IPX-Q",
             "IPX-S",
+            "OrmoComp",
             "*",
         }
         if not set(value).issubset(valid_resins_set):
