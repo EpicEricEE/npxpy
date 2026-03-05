@@ -175,7 +175,7 @@ class InterfaceAligner(Node):
         name: str = "Interface aligner",
         signal_type: str = "auto",
         detector_type: str = "auto",
-        measure_tilt: bool = False,
+        measure_tilt: bool = True,
         area_measurement: bool = False,
         center_stage: bool = True,
         action_upon_failure: str = "abort",
@@ -191,7 +191,7 @@ class InterfaceAligner(Node):
             name (str): Name of the interface aligner. Defaults to "Interface aligner".
             signal_type (str): The type of signal. Can be 'auto', 'fluorescence', or 'reflection'. Defaults to 'auto'.
             detector_type (str): The type of detector. Can be 'auto', 'confocal', 'camera', or 'camera_legacy'. Defaults to 'auto'.
-            measure_tilt (bool): Whether to measure tilt. Defaults to False.
+            measure_tilt (bool): Whether to measure tilt. Defaults to True.
             area_measurement (bool): Whether to measure the area. Defaults to False.
             center_stage (bool): Whether to center the stage. Defaults to True.
             action_upon_failure (str): Action upon failure, can be 'abort' or 'ignore'. Defaults to 'abort'.
