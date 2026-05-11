@@ -411,6 +411,9 @@ class Array(_GatekeeperSpace):
         node_dict["order"] = self.order
         node_dict["shape"] = self.shape
         node_dict["array_type"] = self._array_type
+        node_dict["properties"] = {
+            "reduce_instance_count": True
+        }
 
         if self._array_type == "HEXAGONAL_GRID":
             node_dict["hexagonal_spacing"] = self._hex_spacing
