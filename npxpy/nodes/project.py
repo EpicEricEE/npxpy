@@ -281,6 +281,22 @@ class Project(Node):
         )
         project_info_data = self._create_project_info(self.project_info)
 
+        # Error if used resources are not loaded
+        for structure in self.grab_all_nodes_bfs("structure"):
+            if structure.mesh and structure.mesh.id not in self._loaded_resource_ids:
+                raise ValueError(
+                    f"Mesh '{structure.mesh.name}' is used but not loaded."
+                )
+            if structure.preset and structure.preset.id not in self._loaded_preset_ids:
+                raise ValueError(
+                    f"Preset '{structure.preset.name}' is used but not loaded."
+                )
+        for marker_aligner in self.grab_all_nodes_bfs("marker_alignment"):
+            if marker_aligner.image and marker_aligner.image.id not in self._loaded_resource_ids:
+                raise ValueError(
+                    f"Image '{marker_aligner.image.name}' is used but not loaded."
+                )
+
         with zipfile.ZipFile(
             nano_file_path, "w", zipfile.ZIP_STORED
         ) as nano_zip:
